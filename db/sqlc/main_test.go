@@ -20,8 +20,6 @@ func TestMain(m *testing.M) {
 	connection, err := sql.Open(dbDriver, dbSource)
 	if err != nil {
 		log.Fatal("DB Connection [ Failed ]: ", err)
-	} else {
-		log.Fatal("DB Connection [ Successed ]")
 	}
 
 	testQueries = New(connection)
