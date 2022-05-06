@@ -21,6 +21,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal("DB Connection [ Failed ]: ", err)
 	}
+	log.Fatal("DB Connection [ Success ]: ", err)
 
 	testQueries = New(connection)
 
