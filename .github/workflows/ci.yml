@@ -18,7 +18,7 @@ jobs:
         # Provide the password for postgres
         env:
           # should be same as `make postgres` password from Makefile
-          POSTGRES_USERNAME: root
+          POSTGRES_USER: root
           POSTGRES_PASSWORD: admin
           POSTGRES_DB: simple_bank
         ports: 
