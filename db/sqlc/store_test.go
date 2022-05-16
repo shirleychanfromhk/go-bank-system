@@ -2,32 +2,41 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func TestTransactionTx(t *testing.T) {
+func TestTransactionTxDeadlock(t *testing.T) {
 	store := NewStore(testDB)
 
 	account1 := createRandomAccount(t)
 	account2 := createRandomAccount(t)
+	fmt.Println("Before Transaction: ", account1.Balance, account2.Balance)
 
 	// Run in goroutines
-	n := 5
+	n := 10
 	amount := int64(10)
 
 	errs := make(chan error)
-	results := make(chan TransactionTxResult)
 
 	for i := 0; i < n; i++ {
+		fromAccountId := account1.ID
+		toAccountId := account2.ID
+
+		// Set half of the transaction to transfer from account 2 to account 1
+		if i%2 == 1 {
+			fromAccountId = account2.ID
+			toAccountId = account1.ID
+		}
+
 		go func() {
-			result, err := store.TransactionTx(context.Background(), TransactionTxParams{
-				FromAccountID: account1.ID,
-				ToAccountID:   account2.ID,
+			_, err := store.TransactionTx(context.Background(), TransactionTxParams{
+				FromAccountID: fromAccountId,
+				ToAccountID:   toAccountId,
 				Amount:        amount,
 			})
 			errs <- err
-			results <- result
 		}()
 	}
 
@@ -35,38 +44,15 @@ func TestTransactionTx(t *testing.T) {
 		err := <-errs
 		require.NoError(t, err)
 
-		result := <-results
-		require.NotEmpty(t, result)
-
-		// check Transaction
-		transaction := result.Transaction
-		require.NotEmpty(t, transaction)
-		require.Equal(t, account1.ID, transaction.FromAccountID)
-		require.Equal(t, account2.ID, transaction.ToAccountID)
-		require.Equal(t, amount, transaction.Amount)
-		require.NotZero(t, transaction.ID)
-		require.NotZero(t, transaction.CreatedAt)
-		_, err = store.GetTransaction(context.Background(), transaction.ID)
-		require.NoError(t, err)
-
-		// check From Record
-		fromRecord := result.FromRecord
-		require.NotEmpty(t, fromRecord)
-		require.Equal(t, account1.ID, fromRecord.AccountID)
-		require.Equal(t, -amount, fromRecord.Amount)
-		require.NotZero(t, fromRecord.ID)
-		require.NotZero(t, fromRecord.CreatedAt)
-		_, err = store.GetRecord(context.Background(), fromRecord.ID)
-		require.NoError(t, err)
-
-		// check To Record
-		toRecord := result.ToRecord
-		require.NotEmpty(t, toRecord)
-		require.Equal(t, account2.ID, toRecord.AccountID)
-		require.Equal(t, amount, toRecord.Amount)
-		require.NotZero(t, toRecord.ID)
-		require.NotZero(t, toRecord.CreatedAt)
-		_, err = store.GetRecord(context.Background(), toRecord.ID)
-		require.NoError(t, err)
 	}
+
+	updateAccount1, err := testQueries.GetAccount(context.Background(), account1.ID)
+	require.NoError(t, err)
+
+	updateAccount2, err := testQueries.GetAccount(context.Background(), account2.ID)
+	require.NoError(t, err)
+
+	fmt.Println("After Transaction: ", updateAccount1.Balance, updateAccount2.Balance)
+	require.Equal(t, account1.Balance, updateAccount1.Balance)
+	require.Equal(t, account2.Balance, updateAccount2.Balance)
 }
