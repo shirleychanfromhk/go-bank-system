@@ -84,7 +84,7 @@ func (q *Queries) ListTransaction(ctx context.Context, arg ListTransactionParams
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Transaction
+	items := []Transaction{}
 	for rows.Next() {
 		var i Transaction
 		if err := rows.Scan(
