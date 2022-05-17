@@ -26,7 +26,7 @@ OFFSET $2;
 
 -- name: UpdateAccount :one
 UPDATE accounts
-SET balance = $2
+SET username = $2, balance = $3, currency = $4, location = $5
 WHERE id = $1
 RETURNING *;
 

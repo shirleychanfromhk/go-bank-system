@@ -7,13 +7,21 @@ import (
 	db "simplebank/db/sqlc"
 )
 
+type updateAccountRequest struct {
+	Id       int64  `json:"id" binding:"required"`
+	Username string `json:"username" binding:"required"`
+	Balance  int64  `json:"balance"  binding:"required"`
+	Currency string `json:"currency" binding:"required"`
+	Location string `json:"location" binding:"required"`
+}
+
 type createAccountRequest struct {
 	Username string `json:"username" binding:"required"`
 	Currency string `json:"currency" binding:"required,oneof=USD GBP HKD"`
 	Location string `json:"location" binding:"required"`
 }
 
-type getAccountByIdRequest struct {
+type accountByIdRequest struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
@@ -23,7 +31,7 @@ type listAccountRequest struct {
 }
 
 func (server *Server) getAccount(ctx *gin.Context) {
-	var req getAccountByIdRequest
+	var req accountByIdRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -84,4 +92,48 @@ func (server *Server) createAccount(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, account)
+}
+
+func (server *Server) updateAccount(ctx *gin.Context) {
+	var req updateAccountRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	arg := db.UpdateAccountParams{
+		ID:       req.Id,
+		Username: req.Username,
+		Balance:  req.Balance,
+		Currency: req.Currency,
+		Location: req.Location,
+	}
+
+	account, err := server.store.UpdateAccount(ctx, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, account)
+}
+
+func (server *Server) deleteAccount(ctx *gin.Context) {
+	var req accountByIdRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	err := server.store.DeleteAccount(ctx, req.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, "Delete Successed.")
 }
