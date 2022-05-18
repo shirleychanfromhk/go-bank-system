@@ -5,19 +5,18 @@ import (
 	"log"
 	"simplebank/api"
 	db "simplebank/db/sqlc"
+	"simplebank/db/util"
 
 	_ "github.com/lib/pq"
 )
 
-const (
-	dbDriver      = "postgres"
-	dbSource      = "postgresql://root:admin@localhost:5432/simple_bank?sslmode=disable"
-	serverAddress = "0.0.0.0:8080"
-)
-
 func main() {
+	viberConfig, err := util.LoadViberConfig(".")
+	if err != nil {
+		log.Fatal("cannot load config: ", err)
+	}
 
-	connection, err := sql.Open(dbDriver, dbSource)
+	connection, err := sql.Open(viberConfig.DBDriver, viberConfig.DBSource)
 	if err != nil {
 		log.Fatal("DB Connection [ Failed ]: ", err)
 	}
@@ -25,7 +24,7 @@ func main() {
 	store := db.NewStore(connection)
 	server := api.NewServer(store)
 
-	err = server.Start(serverAddress)
+	err = server.Start(viberConfig.ServerAddress)
 	if err != nil {
 		log.Fatal("Server failed to start: ", err)
 	}
