@@ -6,21 +6,26 @@ import (
 	"fmt"
 )
 
-type Store struct {
-	*Queries
+type Store interface {
+	Querier
+	TransactionTx(ctx context.Context, arg TransactionTxParams) (TransactionTxResult, error)
+}
+
+type SQLStore struct {
 	db *sql.DB
+	*Queries
 }
 
 // Create a new store
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
 		db:      db,
 		Queries: New(db),
 	}
 }
 
 // Executes a function within a database transaction
-func (store *Store) execTX(ctx context.Context, fn func(*Queries) error) error {
+func (store *SQLStore) execTX(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -68,7 +73,7 @@ func transfer(ctx context.Context, q *Queries, accountID1 int64, accountID2 int6
 	return
 }
 
-func (store *Store) TransactionTx(ctx context.Context, arg TransactionTxParams) (TransactionTxResult, error) {
+func (store *SQLStore) TransactionTx(ctx context.Context, arg TransactionTxParams) (TransactionTxResult, error) {
 	var result TransactionTxResult
 
 	err := store.execTX(ctx, func(q *Queries) error {
