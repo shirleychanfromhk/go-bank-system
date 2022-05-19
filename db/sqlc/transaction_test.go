@@ -28,22 +28,52 @@ func createRandomTransfer(t *testing.T, account1, account2 Account) Transaction 
 	return transaction
 }
 
-func TestGetTransaction(t *testing.T) {
-	// TODO - BK2734 Write the unit test method for [get] bank transaction operation
+func TestCreateTransaction(t *testing.T) {
+	mockAccount1 := createRandomAccount(t)
+	mockAccount2 := createRandomAccount(t)
+	createRandomTransfer(t, mockAccount1, mockAccount2)
 }
 
-func TestCreateTransaction(t *testing.T) {
-	// TODO - BK2734 Write the unit test method for [create] bank transaction operation
+func TestGetTransaction(t *testing.T) {
+	mockAccount1 := createRandomAccount(t)
+	mockAccount2 := createRandomAccount(t)
+	mockTransaction := createRandomTransfer(t, mockAccount1, mockAccount2)
+
+	transaction, err := testQueries.GetTransaction(context.Background(), mockTransaction.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, transaction)
+
+	require.Equal(t, mockAccount1.ID, transaction.FromAccountID)
+	require.Equal(t, mockAccount2.ID, transaction.ToAccountID)
+	require.Equal(t, transaction.Amount, transaction.Amount)
+
+	require.NotZero(t, transaction.ID)
+	require.NotZero(t, transaction.CreatedAt)
 }
 
 func TestListTransactions(t *testing.T) {
 	// TODO - BK2734 Write the unit test method for [get] bank transaction's' operation
-}
+	mockAccount1 := createRandomAccount(t)
+	mockAccount2 := createRandomAccount(t)
 
-func TestUpdateTransaction(t *testing.T) {
-	// TODO - BK2734 Write the unit test method for [update] bank transaction operation
-}
+	for i := 0; i < 5; i++ {
+		createRandomTransfer(t, mockAccount1, mockAccount2)
+		createRandomTransfer(t, mockAccount2, mockAccount1)
+	}
 
-func TestDeleteTransaction(t *testing.T) {
-	// TODO - BK2734 Write the unit test method for [delete] bank transaction operation
+	arg := ListTransactionParams{
+		FromAccountID: mockAccount1.ID,
+		ToAccountID:   mockAccount1.ID,
+		Limit:         5,
+		Offset:        5,
+	}
+
+	transactions, err := testQueries.ListTransaction(context.Background(), arg)
+	require.NoError(t, err)
+	require.Len(t, transactions, 5)
+
+	for _, transaction := range transactions {
+		require.NotEmpty(t, transaction)
+		require.True(t, transaction.FromAccountID == mockAccount1.ID || transaction.ToAccountID == mockAccount1.ID)
+	}
 }

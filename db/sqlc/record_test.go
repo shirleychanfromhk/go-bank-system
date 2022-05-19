@@ -45,14 +45,6 @@ func TestCreateRecord(t *testing.T) {
 	createRandomRecord(t, createRandomAccount(t))
 }
 
-func TestUpdateRecord(t *testing.T) {
-	// TODO - BK2534: develop unit test method for update records operation
-}
-
-func TestDeleteRecord(t *testing.T) {
-	// TODO - BK2535: develop unit test method for delete records operation
-}
-
 func TestListRecords(t *testing.T) {
 	// TODO - BK2536: develop unit test method for get records operation
 }

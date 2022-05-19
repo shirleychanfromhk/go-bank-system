@@ -101,3 +101,17 @@ func TestListAccounts(t *testing.T) {
 		require.NotEmpty(t, account)
 	}
 }
+
+func TestGetAccountForUpdate(t *testing.T) {
+	mockAccount := createRandomAccount(t)
+	account, err := testQueries.GetAccountForUpdate(context.Background(), mockAccount.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, account)
+
+	require.Equal(t, account.ID, mockAccount.ID)
+	require.Equal(t, account.Username, mockAccount.Username)
+	require.Equal(t, account.Balance, mockAccount.Balance)
+	require.Equal(t, account.Currency, mockAccount.Currency)
+	require.Equal(t, account.Location, mockAccount.Location)
+	require.WithinDuration(t, account.CreatedAt, mockAccount.CreatedAt, time.Second)
+}
