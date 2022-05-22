@@ -2,10 +2,11 @@ package db
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"simplebank/db/util"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func createRandomRecord(t *testing.T, account Account) Record {
@@ -46,5 +47,23 @@ func TestCreateRecord(t *testing.T) {
 }
 
 func TestListRecords(t *testing.T) {
-	// TODO - BK2536: develop unit test method for get records operation
+	account := createRandomAccount(t)
+	for i := 0; i < 10; i++ {
+		createRandomRecord(t, account)
+	}
+
+	arg := ListRecordsParams{
+		AccountID: account.ID,
+		Limit:     5,
+		Offset:    5,
+	}
+
+	records, err := testQueries.ListRecords(context.Background(), arg)
+	require.NoError(t, err)
+	require.Len(t, records, 5)
+
+	for _, records := range records {
+		require.NotEmpty(t, records)
+	}
+
 }
