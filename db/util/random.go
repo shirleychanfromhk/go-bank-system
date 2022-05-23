@@ -1,6 +1,8 @@
 package util
 
 import (
+	"database/sql"
+	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -44,4 +46,16 @@ func RandomCurrency() string {
 
 func RandomLocation() string {
 	return RandomString(6)
+}
+
+func RandomEmail() string {
+	return fmt.Sprintf("%s@email.com", RandomString(6))
+}
+
+func RandomContactNumber() sql.NullString {
+	return sql.NullString{String: RandomString(0)}
+}
+
+func RandomAddress() sql.NullString {
+	return sql.NullString{String: RandomString(0)}
 }
