@@ -17,7 +17,7 @@ type updateAccountRequest struct {
 
 type createAccountRequest struct {
 	Username string `json:"username" binding:"required"`
-	Currency string `json:"currency" binding:"required,oneof=USD GBP HKD"`
+	Currency string `json:"currency" binding:"required,currency`
 	Location string `json:"location" binding:"required"`
 }
 
