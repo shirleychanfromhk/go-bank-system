@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -32,4 +33,16 @@ type Transaction struct {
 	// Must be positive
 	Amount    int64     `json:"amount"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type User struct {
+	Username       string         `json:"username"`
+	HashedPassword string         `json:"hashed_password"`
+	FirstName      string         `json:"first_name"`
+	LastName       string         `json:"last_name"`
+	Email          string         `json:"email"`
+	ContactNumber  sql.NullString `json:"contact_number"`
+	Address        sql.NullString `json:"address"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	CreatedAt      time.Time      `json:"created_at"`
 }
