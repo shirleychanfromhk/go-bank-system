@@ -13,8 +13,11 @@ import (
 )
 
 func main() {
+	// example cronjob which print hello world for every second. Uncomment the line to taste it.
+	go cronjob.StartCronJob("@every 1s", &cronjob.ExampleJob{}, time.Local)
+
 	// runing cronjob at background at every 0000,0800,1600 UTC
-	go cronjob.StartCronJob("0 0,8,16 * * *", &cronjob.ExchangeRateUpdateJob{}, time.Local)
+	go cronjob.StartCronJob("0 0,8,16 * * *", &cronjob.ExchangeRateUpdateJob{}, time.UTC)
 
 	viberConfig, err := util.LoadViberConfig(".")
 	if err != nil {
