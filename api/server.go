@@ -20,6 +20,9 @@ func NewServer(store db.Store) *Server {
 		valid.RegisterValidation("currency", validCurrency)
 	}
 
+	// User Endpoints
+	router.POST("/users", server.createUser)
+
 	// Account Endpoints
 	router.GET("/accounts/:id", server.getAccount)
 	router.GET("/accounts", server.getListAccount)
