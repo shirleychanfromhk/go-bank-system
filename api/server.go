@@ -1,10 +1,11 @@
 package api
 
 import (
+	db "simplebank/db/sqlc"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
-	db "simplebank/db/sqlc"
 )
 
 type Server struct {
@@ -29,6 +30,9 @@ func NewServer(store db.Store) *Server {
 
 	// Transaction Endpoints
 	router.POST("/transactions", server.createTransaction)
+
+	//Exchange Endpoints
+	router.GET("/exchange", server.getExchangeRate)
 
 	server.router = router
 	return server
