@@ -197,7 +197,7 @@ func TestTransactionAPI(t *testing.T) {
 			store := mockdb.NewMockStore(controller)
 			testCase.buildStubs(store)
 
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			res, err := json.Marshal(testCase.body)
