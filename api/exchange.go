@@ -53,9 +53,10 @@ func (server *Server) getExchangeRate(ctx *gin.Context) {
 
 	var responseObject apiResponse
 	json.Unmarshal(body, &responseObject)
-	/* TODO check the status is it success
-	if !apiResponse.Status {
+
+	if responseObject.Status != true {
 		ctx.Status(400)
-	}*/
+	}
+
 	ctx.IndentedJSON(http.StatusOK, responseObject.Result)
 }
