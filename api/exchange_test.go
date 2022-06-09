@@ -36,7 +36,17 @@ func TestGetExchangeRate(t *testing.T) {
 				require.Equal(t, http.StatusOK, recorder.Code)
 			},
 		},
-		//TODO design a test case for bad request
+		{
+			name: "Invalid Currency",
+			body: gin.H{
+				"to":     "ABC",
+				"from":   mockFromCurrency,
+				"amount": mockAmount,
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
 	}
 
 	for i := range testCases {
