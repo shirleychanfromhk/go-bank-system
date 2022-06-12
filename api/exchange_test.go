@@ -56,7 +56,7 @@ func TestGetExchangeRate(t *testing.T) {
 			defer controller.Finish()
 
 			store := mockdb.NewMockStore(controller)
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			res, err := json.Marshal(testCase.body)
