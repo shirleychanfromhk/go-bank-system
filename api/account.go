@@ -92,8 +92,10 @@ func (server *Server) createAccount(ctx *gin.Context) {
 			switch pqErr.Code.Name() {
 			case "foreign_key_violation", "unique_violation":
 				ctx.JSON(http.StatusForbidden, errorResponse(err))
+				return
 			}
 			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
