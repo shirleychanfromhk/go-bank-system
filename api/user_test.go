@@ -4,10 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
-	"github.com/lib/pq"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +12,11 @@ import (
 	db "simplebank/db/sqlc"
 	"simplebank/db/util"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
+	"github.com/lib/pq"
+	"github.com/stretchr/testify/require"
 )
 
 func userMatcher(t *testing.T, body *bytes.Buffer, user db.User) {
@@ -227,4 +228,54 @@ func TestCreateUserAPI(t *testing.T) {
 		})
 	}
 
+}
+
+func TestUserLoginAPI(t *testing.T) {
+	user, password := randomUser(t)
+
+	testCases := []struct {
+		name          string
+		body          gin.H
+		buildStubs    func(store *mockdb.MockStore)
+		checkResponse func(recoder *httptest.ResponseRecorder)
+	}{
+		{
+			name: "IncorrectPassword",
+			body: gin.H{
+				"username": user.Username,
+				"password": password + "abc",
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetUser(gomock.Any(), gomock.Any()).Times(1)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+			},
+		},
+	}
+
+	for i := range testCases {
+		testCase := testCases[i]
+
+		t.Run(testCase.name, func(t *testing.T) {
+			controller := gomock.NewController(t)
+			defer controller.Finish()
+
+			store := mockdb.NewMockStore(controller)
+			testCase.buildStubs(store)
+
+			server := newTestServer(t, store)
+			recorder := httptest.NewRecorder()
+
+			res, err := json.Marshal(testCase.body)
+			require.NoError(t, err)
+
+			userURL := "/users/login"
+			request, err := http.NewRequest(http.MethodPost, userURL, bytes.NewReader(res))
+			require.NoError(t, err)
+
+			server.router.ServeHTTP(recorder, request)
+			testCase.checkResponse(recorder)
+		})
+	}
 }
