@@ -2,10 +2,12 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	db "simplebank/db/sqlc"
+	"simplebank/token"
 )
 
 type transferRequest struct {
@@ -22,13 +24,18 @@ func (server *Server) createTransaction(ctx *gin.Context) {
 		return
 	}
 
-	validFromAccount, fromAccount := server.validAccount(ctx, req.FromAccountID)
-	if !validFromAccount || !server.validCurrency(ctx, fromAccount, req.Currency) {
+	validFromAccount, fromAccount := server.validAccount(ctx, req.FromAccountID, req.Currency)
+	if !validFromAccount {
 		return
 	}
 
-	validToAccount, toAccount := server.validAccount(ctx, req.ToAccountID)
-	if !validToAccount || !server.validCurrency(ctx, toAccount, req.Currency) {
+	if ctx.MustGet(authPayLoadKey).(*token.Payload).Username != fromAccount.Username {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(errors.New("From account does not belong to the user")))
+		return
+	}
+
+	validToAccount, _ := server.validAccount(ctx, req.ToAccountID, req.Currency)
+	if !validToAccount {
 		return
 	}
 
@@ -47,24 +54,21 @@ func (server *Server) createTransaction(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, transaction)
 }
 
-func (server *Server) validAccount(ctx *gin.Context, accountID int64) (bool, db.Account) {
+func (server *Server) validAccount(ctx *gin.Context, accountID int64, currency string) (bool, db.Account) {
 	account, err := server.store.GetAccount(ctx, accountID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return false, db.Account{}
+			return false, account
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return false, db.Account{}
+		return false, account
 	}
-	return true, account
-}
 
-func (server *Server) validCurrency(ctx *gin.Context, account db.Account, currency string) bool {
 	if account.Currency != currency {
 		err := fmt.Errorf("account [%d] currency mismatch: %s vs %s", account.ID, account.Currency, currency)
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return false
+		return false, account
 	}
-	return true
+	return true, account
 }
