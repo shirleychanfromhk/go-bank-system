@@ -2,11 +2,9 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"simplebank/db/util"
 
 	"github.com/gin-gonic/gin"
@@ -17,9 +15,9 @@ const (
 )
 
 type exchangeRequest struct {
-	ToCurrency   string `json:"to" binding:"required"`
-	FromCurrency string `json:"from" binding:"required"`
-	Amount       string `json:"amount" binding:"required"`
+	ToCurrency   string `uri:"to" binding:"required"`
+	FromCurrency string `uri:"from" binding:"required"`
+	Amount       string `uri:"amount" binding:"required"`
 }
 
 type apiResponse struct {
@@ -35,20 +33,20 @@ type apiError struct {
 
 func (server *Server) getExchangeRate(ctx *gin.Context) {
 	var exchangeReq exchangeRequest
-	if err := ctx.BindJSON(&exchangeReq); err != nil {
+	if err := ctx.ShouldBindUri(&exchangeReq); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 	url := buildApiUrl(exchangeReq)
-
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 
 	viberConfig, err := util.LoadViberConfig("..")
 	req.Header.Set("apikey", viberConfig.ApiKey)
+	//req.Header.Set("apikey", server.config.ApiKey)
 	if err != nil {
-		fmt.Print(err.Error())
-		os.Exit(1)
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
 	}
 
 	res, err := client.Do(req)
@@ -66,8 +64,12 @@ func (server *Server) getExchangeRate(ctx *gin.Context) {
 		ctx.IndentedJSON(http.StatusBadRequest, responseObject.Error.Message)
 	}
 
+	if res.StatusCode == 429 {
+		ctx.IndentedJSON(http.StatusTooManyRequests, responseObject.Error.Message)
+	}
+
 	if res.StatusCode != 200 {
-		ctx.IndentedJSON(http.StatusNotFound, "Internal server error")
+		ctx.IndentedJSON(http.StatusInternalServerError, "Internal server error")
 	}
 
 	log.Printf(string(body))

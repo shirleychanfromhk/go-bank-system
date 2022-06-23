@@ -56,7 +56,7 @@ func (server *Server) setupRouter() {
 	router.POST("/transactions", server.createTransaction)
 
 	//Exchange Endpoints
-	router.GET("/exchange", server.getExchangeRate)
+	router.GET("/exchange/:to/:from/:amount", server.getExchangeRate)
 
 	server.router = router
 }
