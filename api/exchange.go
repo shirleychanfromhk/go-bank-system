@@ -41,9 +41,12 @@ func (server *Server) getExchangeRate(ctx *gin.Context) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 
-	viberConfig, err := util.LoadViberConfig("..")
-	req.Header.Set("apikey", viberConfig.ApiKey)
-	//req.Header.Set("apikey", server.config.ApiKey)
+	config, err := util.LoadViberConfig("../")
+	if err != nil {
+		log.Fatal("cannot load config: ", err)
+	}
+	req.Header.Set("apikey", config.ApiKey)
+
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
