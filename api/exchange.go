@@ -14,12 +14,6 @@ const (
 	URL = "https://api.apilayer.com/exchangerates_data/convert?to="
 )
 
-type exchangeRequest struct {
-	ToCurrency   string `uri:"to" binding:"required"`
-	FromCurrency string `uri:"from" binding:"required"`
-	Amount       string `uri:"amount" binding:"required"`
-}
-
 type apiResponse struct {
 	Status bool    `json:"success"`
 	Result float64 `json:"result"`
@@ -32,12 +26,16 @@ type apiError struct {
 }
 
 func (server *Server) getExchangeRate(ctx *gin.Context) {
-	var exchangeReq exchangeRequest
-	if err := ctx.ShouldBindUri(&exchangeReq); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+
+	amount := ctx.Query("amount")
+	toCurrency := ctx.Query("to")
+	fromCurrency := ctx.Query("from")
+	if amount == "" || toCurrency == "" || fromCurrency == "" {
+		log.Fatal("Parameter of amount or to or from can not null")
 		return
 	}
-	url := buildApiUrl(exchangeReq)
+
+	url := buildApiUrl(amount, toCurrency, fromCurrency)
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 
@@ -79,9 +77,9 @@ func (server *Server) getExchangeRate(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, responseObject.Result)
 }
 
-func buildApiUrl(exchangeReq exchangeRequest) string {
-	result := URL + exchangeReq.ToCurrency + "&from=" +
-		exchangeReq.FromCurrency + "&amount=" + exchangeReq.Amount
+func buildApiUrl(amount string, toCurrency string, fromCurrency string) string {
+	result := URL + toCurrency + "&from=" +
+		fromCurrency + "&amount=" + amount
 
 	return result
 }

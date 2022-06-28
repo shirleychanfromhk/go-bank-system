@@ -53,7 +53,7 @@ func TestGetExchangeRate(t *testing.T) {
 			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
-			exchangeURL := fmt.Sprintf("/exchange/%s/%s/%s", testCase.mockToCurrency, testCase.mockFromCurrency, testCase.mockAmount)
+			exchangeURL := fmt.Sprintf("/exchange?to=" + testCase.mockToCurrency + "&from=" + testCase.mockFromCurrency + "&amount=" + testCase.mockAmount)
 			request, err := http.NewRequest(http.MethodGet, exchangeURL, nil)
 			require.NoError(t, err)
 
