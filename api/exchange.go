@@ -25,17 +25,20 @@ type apiError struct {
 	Message string `json:"message"`
 }
 
-func (server *Server) getExchangeRate(ctx *gin.Context) {
+type exchangeRequest struct {
+	ToCurrency   string `form:"to" binding:"required"`
+	FromCurrency string `form:"from" binding:"required"`
+	Amount       string `form:"amount" binding:"required"`
+}
 
-	amount := ctx.Query("amount")
-	toCurrency := ctx.Query("to")
-	fromCurrency := ctx.Query("from")
-	if amount == "" || toCurrency == "" || fromCurrency == "" {
-		log.Fatal("Parameter of amount or to or from can not null")
+func (server *Server) getExchangeRate(ctx *gin.Context) {
+	var exchangeReq exchangeRequest
+	if err := ctx.ShouldBindQuery(&exchangeReq); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	url := buildApiUrl(amount, toCurrency, fromCurrency)
+	url := buildApiUrl(exchangeReq.Amount, exchangeReq.ToCurrency, exchangeReq.FromCurrency)
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 
