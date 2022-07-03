@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -250,6 +251,32 @@ func TestUserLoginAPI(t *testing.T) {
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+			},
+		},
+		{
+			name: "UserNotFound",
+			body: gin.H{
+				"username": user.Username + "abc",
+				"password": password,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetUser(gomock.Any(), gomock.Eq(user.Username+"abc")).Times(1).Return(db.User{}, sql.ErrNoRows)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
+		{
+			name: "InternalServerError",
+			body: gin.H{
+				"username": user.Username,
+				"password": password,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetUser(gomock.Any(), gomock.Eq(user.Username)).Times(1).Return(db.User{}, sql.ErrConnDone)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
 			},
 		},
 	}
