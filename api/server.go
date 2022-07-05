@@ -2,12 +2,13 @@ package api
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
 	db "simplebank/db/sqlc"
 	"simplebank/db/util"
 	"simplebank/token"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 )
 
 type Server struct {
@@ -55,6 +56,9 @@ func (server *Server) setupRouter() {
 
 	// Transaction Endpoints
 	authRoutes.POST("/transactions", server.createTransaction)
+
+	//Exchange Endpoints
+	router.GET("/exchange", server.getExchangeRate)
 
 	server.router = router
 }
