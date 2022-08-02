@@ -2,10 +2,12 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 	"net/http"
 	db "simplebank/db/sqlc"
+	"simplebank/token"
 )
 
 type updateAccountRequest struct {
@@ -17,8 +19,7 @@ type updateAccountRequest struct {
 }
 
 type createAccountRequest struct {
-	Username string `json:"username" binding:"required"`
-	Currency string `json:"currency" binding:"required,currency`
+	Currency string `json:"currency" binding:"required,currency"`
 	Location string `json:"location" binding:"required"`
 }
 
@@ -48,6 +49,12 @@ func (server *Server) getAccount(ctx *gin.Context) {
 		return
 	}
 
+	if account.Username != ctx.MustGet(authPayLoadKey).(*token.Payload).Username {
+		err := errors.New("The account does not belong to the user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
 	ctx.JSON(http.StatusOK, account)
 }
 
@@ -59,8 +66,9 @@ func (server *Server) getListAccount(ctx *gin.Context) {
 	}
 
 	arg := db.ListAccountsParams{
-		Limit:  req.PageSize,
-		Offset: (req.PageID - 1) * req.PageSize,
+		Username: ctx.MustGet(authPayLoadKey).(*token.Payload).Username,
+		Limit:    req.PageSize,
+		Offset:   (req.PageID - 1) * req.PageSize,
 	}
 
 	accounts, err := server.store.ListAccounts(ctx, arg)
@@ -80,7 +88,7 @@ func (server *Server) createAccount(ctx *gin.Context) {
 	}
 
 	arg := db.CreateAccountParams{
-		Username: req.Username,
+		Username: ctx.MustGet(authPayLoadKey).(*token.Payload).Username,
 		Currency: req.Currency,
 		Location: req.Location,
 		Balance:  0,
@@ -92,8 +100,10 @@ func (server *Server) createAccount(ctx *gin.Context) {
 			switch pqErr.Code.Name() {
 			case "foreign_key_violation", "unique_violation":
 				ctx.JSON(http.StatusForbidden, errorResponse(err))
+				return
 			}
 			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
