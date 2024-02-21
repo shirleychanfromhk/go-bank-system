@@ -24,3 +24,12 @@ Run the below commend in VS code terminal
 ```
 # Run the unit test
 You can go to Testing tab in left hand side of VS Code, then you can run the by clicking Run test button
+
+# Step for integrating GraphQL
+Install GraphQl library's command
+```go
+    go get github.com/graphql-go/graphql
+```
+
+
+
